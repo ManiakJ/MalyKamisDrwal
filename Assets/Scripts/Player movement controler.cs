@@ -1,6 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 using System.Collections;
+using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     public float speed = 2f;
@@ -47,7 +48,8 @@ public class PlayerMovement : MonoBehaviour
         //przywrócenie normalnej prędkości
         if (Input.GetKeyUp(KeyCode.LeftShift))
         {
-        //tutaj być może dorzuci się staminarecovery
+            sprint = false;
+            StartCoroutine(Stamina_recovery());
         }
 
         //obliczanie kierunku i przesuniecia
@@ -100,12 +102,27 @@ public class PlayerMovement : MonoBehaviour
             {
                 Debug.Log("ilosc" + stamina_amount);
                 stamina_amount = stamina_amount - 1;
-                speed = 20f;
+                speed = 10f;
                 Debug.Log("ilosc" + stamina_amount);
                 yield return new WaitForSeconds(0.1f);
             }
         }
         sprint = false;
         speed = 2f;
+    }
+    IEnumerator Stamina_recovery()
+    {
+        if (sprint == false)
+        {
+            while (stamina_amount < 100 && sprint == false)
+            {
+                Debug.Log("Odnawianie");
+                Debug.Log("ilosc" + stamina_amount);
+                stamina_amount = stamina_amount + 2;
+                Debug.Log("ilosc" + stamina_amount);
+                yield return new WaitForSeconds(0.1f);
+            }
+        }
+
     }
 }
