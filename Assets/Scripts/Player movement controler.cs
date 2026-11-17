@@ -7,7 +7,9 @@ public class PlayerMovement : MonoBehaviour
     public float speed = 2f;
     public float fallLimit = -5f;
    private int stamina_amount = 100;
-    bool sprint = false;
+   private bool sprint = false;
+   private bool mouse = false;
+   private bool stop_regeneration = false;
 
     public AudioSource footstepsAudio;
     private Vector3 startPosition;
@@ -25,33 +27,55 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (Keyboard.current == null) return;
         float horizontal = 0f;
         float vertical = 0f;
 
 
-        //WSAD
-        if (Input.GetKey(KeyCode.A))
+ 
+        // WSAD
+        if (Keyboard.current.aKey.isPressed)
             horizontal = -1f;
-        if (Input.GetKey(KeyCode.D))
+        if (Keyboard.current.dKey.isPressed)
             horizontal = 1f;
-        if (Input.GetKey(KeyCode.W))
+        if (Keyboard.current.wKey.isPressed)
             vertical = 1f;
-        if (Input.GetKey(KeyCode.S))
+        if (Keyboard.current.sKey.isPressed)
             vertical = -1f;
-        //przyspieszanie
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        // Przyspieszanie 
+        if (Keyboard.current.leftShiftKey.wasPressedThisFrame)
         {
-            // speed = 20f;
             sprint = true;
-            StartCoroutine(stamina());
+            stop_regeneration = true;
+            if (stop_regeneration)
+            {
+                StartCoroutine(stamina());
+            }
         }
         //przywrócenie normalnej prędkości
-        if (Input.GetKeyUp(KeyCode.LeftShift))
+        if (Keyboard.current.leftShiftKey.wasReleasedThisFrame)
         {
             sprint = false;
-            StartCoroutine(Stamina_recovery());
+            stop_regeneration = false;
+            StartCoroutine(Stamina_recovery(false));
+        }
+        //uderzenie lewym przyciskiem myszy
+        if (Mouse.current.leftButton.wasPressedThisFrame) 
+        {
+            mouse = true;
+            stop_regeneration = true;
+            if (stop_regeneration)
+            {
+                StartCoroutine(stamina());
+            }
         }
 
+        if (Mouse.current.leftButton.wasReleasedThisFrame)
+        {
+            mouse = false;
+            stop_regeneration = false;
+            StartCoroutine(Stamina_recovery(true));
+        }
         //obliczanie kierunku i przesuniecia
         Vector3 movement = new Vector3(horizontal, 0f, vertical);
         transform.Translate(movement.normalized * speed * Time.deltaTime, Space.Self);
@@ -96,22 +120,37 @@ public class PlayerMovement : MonoBehaviour
     IEnumerator stamina()
     {
 
-        if (sprint == true)
+        if (sprint == true || mouse == true)
         {
-            while (stamina_amount > 0 && sprint == true)
+            while (stamina_amount > 0 && (sprint == true || mouse == true))
             {
                 Debug.Log("ilosc" + stamina_amount);
-                stamina_amount = stamina_amount - 1;
-                speed = 10f;
-                Debug.Log("ilosc" + stamina_amount);
+                if (sprint)
+                {
+                    stamina_amount = stamina_amount - 1;
+                    speed = 10f;
+                    Debug.Log("ilosc" + stamina_amount);
+                }
+                if (mouse == true && stamina_amount > 20 )
+                {
+                    stamina_amount = stamina_amount - 20;
+                    Debug.Log("ilość po uderzeniu" + stamina_amount);
+                }
                 yield return new WaitForSeconds(0.1f);
             }
         }
-        sprint = false;
-        speed = 2f;
+          //  sprint = false;
+          //  mouse = false;
+            speed = 2f;
+        
     }
-    IEnumerator Stamina_recovery()
+    IEnumerator Stamina_recovery(bool attack)
     {
+        if (attack == true)
+        {
+            Debug.Log("Po uderzeniu");
+            yield return new WaitForSeconds(5f);
+        }
         if (sprint == false)
         {
             while (stamina_amount < 100 && sprint == false)
