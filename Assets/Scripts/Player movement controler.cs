@@ -74,7 +74,12 @@ public class PlayerMovement : MonoBehaviour
         {
             mouse = false;
             stop_regeneration = false;
-            StartCoroutine(Stamina_recovery(true));
+            if (!stop_regeneration)
+            {
+                StartCoroutine(Stamina_recovery(true));
+            }
+
+            
         }
         //obliczanie kierunku i przesuniecia
         Vector3 movement = new Vector3(horizontal, 0f, vertical);
@@ -139,29 +144,30 @@ public class PlayerMovement : MonoBehaviour
                 yield return new WaitForSeconds(0.1f);
             }
         }
-          //  sprint = false;
-          //  mouse = false;
+
             speed = 2f;
         
     }
-    IEnumerator Stamina_recovery(bool attack)
+    IEnumerator Stamina_recovery(bool attack) // pętla sie wykonuje nawet jak w międzyczasie kliknę lewym przyciskiem myszy
     {
         if (attack == true)
         {
             Debug.Log("Po uderzeniu");
             yield return new WaitForSeconds(5f);
+            attack = false;
         }
-        if (sprint == false)
-        {
-            while (stamina_amount < 100 && sprint == false)
+
+       // if (sprint == false && attack == false)
+       // {
+            while (stamina_amount < 100 && sprint == false && mouse == false) 
             {
                 Debug.Log("Odnawianie");
                 Debug.Log("ilosc" + stamina_amount);
-                stamina_amount = stamina_amount + 2;
+                stamina_amount = stamina_amount + 1;
                 Debug.Log("ilosc" + stamina_amount);
                 yield return new WaitForSeconds(0.1f);
             }
-        }
-
+       // }
+        
     }
 }
