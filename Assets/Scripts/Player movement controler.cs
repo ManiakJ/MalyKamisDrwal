@@ -1,25 +1,28 @@
-using Unity.VisualScripting;
+
 using UnityEngine;
 using System.Collections;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 public class PlayerMovement : MonoBehaviour
 {
-    public float speed = 2f;
-    public float fallLimit = -5f;
-   private int stamina_amount = 100;
-   private bool sprint = false;
-   private bool mouse = false;
-   private bool stop_regeneration = false;
+    public float PlayerSpeed = 2f;
+    public float FallLimit = -5f;
+    private float StaminaAmmount = 100;
+    private float StaminaMax = 100;
+    private bool Sprint = false;
+    private bool Mouse = false;
+    private bool StopRegeneration = false;
+    private bool AttackPouse = false;
 
-    public AudioSource footstepsAudio;
-    private Vector3 startPosition;
+    public AudioSource FootstepsAudio;
+    private Vector3 StartPosition;
     private Rigidbody rb;
 
-
+    public Image StaminaBar;
 
     private void Start()
     {
-        startPosition = transform.position;
+        StartPosition = transform.position;
         rb = GetComponent<Rigidbody>();
 
     }
@@ -30,7 +33,6 @@ public class PlayerMovement : MonoBehaviour
         if (Keyboard.current == null) return;
         float horizontal = 0f;
         float vertical = 0f;
-
 
  
         // WSAD
@@ -45,126 +47,137 @@ public class PlayerMovement : MonoBehaviour
         // Przyspieszanie 
         if (Keyboard.current.leftShiftKey.wasPressedThisFrame)
         {
-            sprint = true;
-            stop_regeneration = true;
-            if (stop_regeneration)
-            {
-                StartCoroutine(stamina());
-            }
-        }
-        //przywrócenie normalnej prędkości
-        if (Keyboard.current.leftShiftKey.wasReleasedThisFrame)
-        {
-            sprint = false;
-            stop_regeneration = false;
-            StartCoroutine(Stamina_recovery(false));
-        }
-        //uderzenie lewym przyciskiem myszy
-        if (Mouse.current.leftButton.wasPressedThisFrame) 
-        {
-            mouse = true;
-            stop_regeneration = true;
-            if (stop_regeneration)
+
+            Debug.Log("x" + horizontal);
+            Debug.Log("y" + vertical);
+            if (horizontal != 0 || vertical != 0) { 
+            Sprint = true;
+            StopRegeneration = true;
+            if (StopRegeneration)
             {
                 StartCoroutine(stamina());
             }
         }
 
-        if (Mouse.current.leftButton.wasReleasedThisFrame)
+        }
+        //przywrócenie normalnej prędkości
+        if (Keyboard.current.leftShiftKey.wasReleasedThisFrame)
         {
-            mouse = false;
-            stop_regeneration = false;
-            if (!stop_regeneration)
+            Sprint = false;
+            StopRegeneration = false;
+            StartCoroutine(StaminaRecovery(false));
+        }
+        //uderzenie lewym przyciskiem myszy
+        if (UnityEngine.InputSystem.Mouse.current.leftButton.wasPressedThisFrame) 
+        {
+            Mouse = true;
+            StopRegeneration = true;
+            if (StopRegeneration)
             {
-                StartCoroutine(Stamina_recovery(true));
+                AttackPouse = true;
+                StartCoroutine(stamina());
+            }
+        }
+
+        if (UnityEngine.InputSystem.Mouse.current.leftButton.wasReleasedThisFrame)
+        {
+            Mouse = false;
+            StopRegeneration = false;
+            if (!StopRegeneration)
+            {
+                StartCoroutine(StaminaRecovery(true));
             }
 
             
         }
         //obliczanie kierunku i przesuniecia
         Vector3 movement = new Vector3(horizontal, 0f, vertical);
-        transform.Translate(movement.normalized * speed * Time.deltaTime, Space.Self);
+        transform.Translate(movement.normalized * PlayerSpeed * Time.deltaTime, Space.Self);
 
-        if (transform.position.y < fallLimit)
+        if (transform.position.y < FallLimit)
         {
             Respawn();
         }
-        if (footstepsAudio != null)
+        if (FootstepsAudio != null)
         {
 
             if (movement.magnitude > 0f)
             {
-                if (!footstepsAudio.isPlaying)
-                    footstepsAudio.Play();
+                if (!FootstepsAudio.isPlaying)
+                    FootstepsAudio.Play();
             }
             else
             {
-                if (footstepsAudio.isPlaying)
-                    footstepsAudio.Stop();
+                if (FootstepsAudio.isPlaying)
+                    FootstepsAudio.Stop();
             }
         }
     }
     void Respawn()
     {
-        if (footstepsAudio != null)
+        if (FootstepsAudio != null)
         {
-            footstepsAudio.Stop();
+            FootstepsAudio.Stop();
         }
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            rb.position = startPosition;
+            rb.position = StartPosition;
         }
         else
         {
-            transform.position = startPosition;
+            transform.position = StartPosition;
         }
         Debug.Log("Respawn");
     }
     IEnumerator stamina()
     {
 
-        if (sprint == true || mouse == true)
+        if (Sprint == true || Mouse == true)
         {
-            while (stamina_amount > 0 && (sprint == true || mouse == true))
+            while (StaminaAmmount > 0 && (Sprint == true || Mouse == true))
             {
-                Debug.Log("ilosc" + stamina_amount);
-                if (sprint)
+                Debug.Log("ilosc" + StaminaAmmount);
+                if (Sprint)
                 {
-                    stamina_amount = stamina_amount - 1;
-                    speed = 10f;
-                    Debug.Log("ilosc" + stamina_amount);
+                    StaminaAmmount = StaminaAmmount - 1;
+                    PlayerSpeed = 10f;
+                    StaminaBar.fillAmount = StaminaAmmount / StaminaMax;
+                    Debug.Log("ilosc" + StaminaAmmount);
                 }
-                if (mouse == true && stamina_amount > 20 )
+                if (Mouse == true && StaminaAmmount > 20 )
                 {
-                    stamina_amount = stamina_amount - 20;
-                    Debug.Log("ilość po uderzeniu" + stamina_amount);
+                    StaminaAmmount = StaminaAmmount - 20;
+                    StaminaBar.fillAmount = StaminaAmmount / StaminaMax; 
+                    Debug.Log("ilość po uderzeniu" + StaminaAmmount);
                 }
                 yield return new WaitForSeconds(0.1f);
             }
         }
 
-            speed = 2f;
+            PlayerSpeed = 2f;
         
     }
-    IEnumerator Stamina_recovery(bool attack) // pętla sie wykonuje nawet jak w międzyczasie kliknę lewym przyciskiem myszy
+    IEnumerator StaminaRecovery(bool Attack) // pętla sie wykonuje nawet jak w międzyczasie kliknę lewym przyciskiem myszy
     {
-        if (attack == true)
+        if (Attack == true)
         {
             Debug.Log("Po uderzeniu");
             yield return new WaitForSeconds(5f);
-            attack = false;
+            Attack = false;
+            AttackPouse = false;
         }
 
        // if (sprint == false && attack == false)
        // {
-            while (stamina_amount < 100 && sprint == false && mouse == false) 
+            while (StaminaAmmount < 100 && Sprint == false && Mouse == false && AttackPouse == false) 
             {
                 Debug.Log("Odnawianie");
-                Debug.Log("ilosc" + stamina_amount);
-                stamina_amount = stamina_amount + 1;
-                Debug.Log("ilosc" + stamina_amount);
+                Debug.Log("ilosc" + StaminaAmmount);
+                StaminaAmmount = StaminaAmmount + 1;
+                Debug.Log("ilosc" + StaminaAmmount);
+            StaminaBar.fillAmount =  + StaminaAmmount/StaminaMax;
                 yield return new WaitForSeconds(0.1f);
             }
        // }
